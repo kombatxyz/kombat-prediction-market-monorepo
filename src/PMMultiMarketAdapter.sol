@@ -6,10 +6,10 @@ import {WUsdc} from "./Wusdc.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract PMMultiMarketAdapter {
+contract PMMultiMarketAdapter is Ownable {
     ConditionalTokens public immutable conditionalTokens;
     IERC20 public immutable collateral;
-    WrappedCollateral public immutable wrappedCollateral;
+    WUsdc public immutable wrappedCollateral;
 
     struct Market {
         bytes32[] questionIds;
@@ -29,7 +29,7 @@ contract PMMultiMarketAdapter {
     constructor(address _conditionalTokens, address _collateral) Ownable(msg.sender) {
         conditionalTokens = ConditionalTokens(_conditionalTokens);
         collateral = IERC20(_collateral);
-        wrappedCollateral = new WrappedCollateral(_collateral);
+        wrappedCollateral = new WUsdc(_collateral);
         wrappedCollateral.setAdapter(address(this));
         IERC20(address(wrappedCollateral)).approve(_conditionalTokens, type(uint256).max);
     }
