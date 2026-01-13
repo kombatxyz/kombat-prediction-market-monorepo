@@ -1,0 +1,11 @@
+# Ignore these files when deploying to App Engine
+.git
+.gitignore
+node_modules
+.env
+*.md
+docker-compose.yml
+Dockerfile
+.dockerignore
+data/
+uploads/

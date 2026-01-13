@@ -1,0 +1,29 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: PMExchange
+    network: mantle-sepolia
+    source:
+      address: "0x4acEaEeA1EbC1C4B86a3Efe4525Cd4F6443E0CCF"
+      abi: PMExchange
+      startBlock: 33400000  # Update with actual deployment block
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Market
+        - Trade
+        - Candle
+        - DailyCandle
+      abis:
+        - name: PMExchange
+          file: ./abis/PMExchange.json
+      eventHandlers:
+        - event: MarketRegistered(indexed bytes32,uint256,uint256)
+          handler: handleMarketRegistered
+        - event: OrderMatched(indexed bytes32,indexed uint64,indexed uint64,uint8,uint128)
+          handler: handleOrderMatched
+      file: ./src/pm-exchange.ts

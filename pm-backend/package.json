@@ -1,0 +1,25 @@
+{
+	"name": "pm-backend",
+	"version": "1.0.0",
+	"description": "Prediction Market Backend API with Admin Interface",
+	"main": "src/index.js",
+	"scripts": {
+		"start": "node src/index.js",
+		"dev": "nodemon src/index.js",
+		"seed": "node src/db/seed.js"
+	},
+	"dependencies": {
+		"@google-cloud/storage": "^7.7.0",
+		"cors": "^2.8.5",
+		"dotenv": "^16.3.1",
+		"ethers": "^6.9.0",
+		"express": "^4.18.2",
+		"multer": "^1.4.5-lts.1",
+		"pg": "^8.17.0",
+		"sql.js": "^1.9.0",
+		"uuid": "^9.0.0"
+	},
+	"devDependencies": {
+		"nodemon": "^3.0.2"
+	}
+}

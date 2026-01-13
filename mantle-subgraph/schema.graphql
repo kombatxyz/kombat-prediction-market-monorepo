@@ -1,0 +1,68 @@
+# Kombat Protocol Price History Subgraph
+
+# Market - basic info for price tracking
+type Market @entity {
+  id: ID!  # conditionId
+  conditionId: Bytes!
+  yesTokenId: BigInt!
+  noTokenId: BigInt!
+  registered: Boolean!
+  
+  # Current price (last trade tick)
+  lastPrice: Int!
+  lastTradeAt: BigInt
+  
+  # Relations
+  trades: [Trade!]! @derivedFrom(field: "market")
+  candles: [Candle!]! @derivedFrom(field: "market")
+  
+  createdAt: BigInt!
+}
+
+# Trade - individual price points
+type Trade @entity {
+  id: ID!  # txHash-logIndex
+  market: Market!
+  tick: Int!           # Price 1-99 ($0.01-$0.99)
+  quantity: BigInt!    # Amount traded (6 decimals)
+  volume: BigInt!      # USDC volume
+  
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+# Candle - OHLC price data (1 hour intervals)
+type Candle @entity {
+  id: ID!  # conditionId-hourTimestamp
+  market: Market!
+  
+  # Time bucket (hour)
+  timestamp: BigInt!   # Start of hour
+  
+  # OHLC
+  open: Int!
+  high: Int!
+  low: Int!
+  close: Int!
+  
+  # Volume
+  volume: BigInt!
+  numTrades: Int!
+}
+
+# Daily candle for longer-term charts
+type DailyCandle @entity {
+  id: ID!  # conditionId-dayTimestamp
+  market: Market!
+  
+  timestamp: BigInt!   # Start of day
+  
+  open: Int!
+  high: Int!
+  low: Int!
+  close: Int!
+  
+  volume: BigInt!
+  numTrades: Int!
+}

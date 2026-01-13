@@ -8,7 +8,6 @@ import {EIP712} from "lib/openzeppelin-contracts/contracts/utils/cryptography/EI
 import {ECDSA} from "lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {LibBitmap} from "lib/solady/src/utils/LibBitmap.sol";
-import "forge-std/console2.sol";
 import {LibBit} from "lib/solady/src/utils/LibBit.sol";
 import {ConditionalTokens} from "./ConditionalTokens.sol";
 
@@ -142,7 +141,7 @@ contract PMExchange is ReentrancyGuard, EIP712, Ownable {
         uint128 quantity
     );
 
-    event OrderMatched(uint64 indexed takerOrderId, uint64 indexed makerOrderId, uint8 tick, uint128 quantity);
+    event OrderMatched(bytes32 indexed conditionId, uint64 indexed takerOrderId, uint64 indexed makerOrderId, uint8 tick, uint128 quantity);
 
     event OrderCancelled(uint64 indexed orderId, uint128 remainingQuantity);
     event OperatorUpdated(address indexed trader, address indexed operator, bool approved);
@@ -830,7 +829,7 @@ contract PMExchange is ReentrancyGuard, EIP712, Ownable {
             remaining -= fillAmt;
             level.totalQuantity -= fillAmt;
 
-            emit OrderMatched(takerOrderId, makerId, tick, fillAmt);
+            emit OrderMatched(taker.conditionId, takerOrderId, makerId, tick, fillAmt);
 
             if (maker.filled == maker.quantity) {
                 maker.status = OrderStatus.Filled;

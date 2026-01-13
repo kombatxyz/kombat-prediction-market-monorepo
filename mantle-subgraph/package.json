@@ -1,0 +1,23 @@
+{
+	"name": "kombat-subgraph",
+	"version": "0.1.0",
+	"description": "Subgraph for Kombat Protocol on Mantle - indexes PMExchange, ConditionalTokens, and FPMM",
+	"repository": "https://github.com/your-org/kombat-monorepo-mantle",
+	"license": "MIT",
+	"scripts": {
+		"codegen": "graph codegen",
+		"build": "graph build",
+		"deploy": "graph deploy --node https://subgraph.mantle.xyz/deploy kombat-protocol/kombat",
+		"deploy:sepolia": "graph deploy --node https://subgraph.mantle.xyz/deploy kombat-protocol/kombat-sepolia",
+		"create-local": "graph create --node http://localhost:8020/ kombat-protocol/kombat",
+		"deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 kombat-protocol/kombat",
+		"test": "graph test"
+	},
+	"dependencies": {
+		"@graphprotocol/graph-cli": "^0.68.0",
+		"@graphprotocol/graph-ts": "^0.32.0"
+	},
+	"devDependencies": {
+		"matchstick-as": "^0.6.0"
+	}
+}

@@ -1,0 +1,41 @@
+# Docker Compose for local development
+services:
+  pm-backend:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DATABASE_PATH=/app/data/markets.db
+      - GCS_BUCKET=pm-market-images
+      - GCS_PROJECT_ID=local-project
+      - GCS_ENDPOINT=http://gcs:4443
+      - GCS_PUBLIC_URL=http://localhost:4443
+      # Mantle Sepolia RPC
+      - RPC_URL=https://rpc.sepolia.mantle.xyz
+      - CHAIN_ID=5003
+      # Core Contracts
+      - CONDITIONAL_TOKENS_ADDRESS=0xFdA547973c86fd6F185eF6b50d5B3A6ecCE9FF8b
+      - PM_EXCHANGE_ADDRESS=0x4acEaEeA1EbC1C4B86a3Efe4525Cd4F6443E0CCF
+      - PM_ROUTER_ADDRESS=0xD2F13Ef8190A5A91B83EC75346940a3C61572C32
+      - USDC_ADDRESS=0xDdB5BAFf948169775df9B0cd0d5aA067b8856c70
+      # Admin key (owner of PMExchange)
+      - ADMIN_PRIVATE_KEY=0xed124e6900cd5c074d9fe23bc7bf5c22f93a5ea7ca76f89e3614ff986f236c7b
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    depends_on:
+      - gcs
+    restart: unless-stopped
+
+  # Fake GCS Server for local development
+  gcs:
+    image: fsouza/fake-gcs-server
+    ports:
+      - "4443:4443"
+    command: [ "-scheme", "http", "-public-host", "localhost:4443", "-external-url", "http://gcs:4443" ]
+    volumes:
+      - gcs-data:/data
+
+volumes:
+  gcs-data:

@@ -1,0 +1,25 @@
+runtime: nodejs20
+
+instance_class: F2
+
+env_variables:
+  RPC_URL: "https://rpc.sepolia.mantle.xyz"
+  CHAIN_ID: "5003"
+  CONDITIONAL_TOKENS_ADDRESS: "0xFdA547973c86fd6F185eF6b50d5B3A6ecCE9FF8b"
+  PM_EXCHANGE_ADDRESS: "0x4acEaEeA1EbC1C4B86a3Efe4525Cd4F6443E0CCF"
+  PM_ROUTER_ADDRESS: "0xD2F13Ef8190A5A91B83EC75346940a3C61572C32"
+  USDC_ADDRESS: "0xDdB5BAFf948169775df9B0cd0d5aA067b8856c70"
+  CLOUD_SQL_CONNECTION_NAME: "vigilant-walker-484020-m4:us-central1:pm-db"
+  DB_USER: "postgres"
+  DB_PASS: "pmbackend123"
+  DB_NAME: "markets"
+  ADMIN_PRIVATE_KEY: "0xed124e6900cd5c074d9fe23bc7bf5c22f93a5ea7ca76f89e3614ff986f236c7b"
+  GCS_PROJECT_ID: "vigilant-walker-484020-m4"
+  GCS_BUCKET: "pm-market-images"
+
+beta_settings:
+  cloud_sql_instances: "vigilant-walker-484020-m4:us-central1:pm-db"
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 2

@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>PM Admin - Market Management</title>
+	<style>
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			background: #0a0a0a;
+			color: #e5e5e5;
+			min-height: 100vh;
+		}
+
+		.header {
+			background: #111;
+			border-bottom: 1px solid #222;
+			padding: 16px 24px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.header h1 {
+			font-size: 20px;
+			font-weight: 600;
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 24px;
+		}
+
+		.tabs {
+			display: flex;
+			gap: 8px;
+			margin-bottom: 24px;
+		}
+
+		.tab {
+			padding: 10px 20px;
+			background: #1a1a1a;
+			border: 1px solid #333;
+			border-radius: 6px;
+			cursor: pointer;
+			color: #888;
+			transition: all 0.2s;
+		}
+
+		.tab:hover {
+			background: #222;
+			color: #fff;
+		}
+
+		.tab.active {
+			background: #2563eb;
+			border-color: #2563eb;
+			color: #fff;
+		}
+
+		.panel {
+			display: none;
+		}
+
+		.panel.active {
+			display: block;
+		}
+
+		.form-section {
+			background: #111;
+			border: 1px solid #222;
+			border-radius: 8px;
+			padding: 24px;
+			margin-bottom: 24px;
+		}
+
+		.form-section h2 {
+			font-size: 18px;
+			margin-bottom: 20px;
+			color: #fff;
+		}
+
+		.form-row {
+			display: flex;
+			gap: 16px;
+			margin-bottom: 16px;
+		}
+
+		.form-group {
+			flex: 1;
+		}
+
+		.form-group label {
+			display: block;
+			margin-bottom: 6px;
+			font-size: 14px;
+			color: #888;
+		}
+
+		.form-group input,
+		.form-group select,
+		.form-group textarea {
+			width: 100%;
+			padding: 10px 12px;
+			background: #0a0a0a;
+			border: 1px solid #333;
+			border-radius: 6px;
+			color: #fff;
+			font-size: 14px;
+		}
+
+		.form-group input:focus,
+		.form-group select:focus,
+		.form-group textarea:focus {
+			outline: none;
+			border-color: #2563eb;
+		}
+
+		.form-group textarea {
+			min-height: 100px;
+			resize: vertical;
+		}
+
+		.checkbox-group {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.checkbox-group input {
+			width: auto;
+		}
+
+		.btn {
+			padding: 10px 20px;
+			border: none;
+			border-radius: 6px;
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 500;
+			transition: all 0.2s;
+		}
+
+		.btn-primary {
+			background: #2563eb;
+			color: #fff;
+		}
+
+		.btn-primary:hover {
+			background: #1d4ed8;
+		}
+
+		.btn-secondary {
+			background: #333;
+			color: #fff;
+		}
+
+		.btn-secondary:hover {
+			background: #444;
+		}
+
+		.btn-danger {
+			background: #dc2626;
+			color: #fff;
+		}
+
+		.options-container {
+			margin-top: 16px;
+		}
+
+		.option-row {
+			display: flex;
+			gap: 12px;
+			align-items: center;
+			margin-bottom: 12px;
+			padding: 12px;
+			background: #0a0a0a;
+			border-radius: 6px;
+		}
+
+		.option-row input {
+			flex: 1;
+		}
+
+		.btn-remove {
+			padding: 6px 12px;
+			font-size: 12px;
+		}
+
+		.markets-table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		.markets-table th,
+		.markets-table td {
+			padding: 12px;
+			text-align: left;
+			border-bottom: 1px solid #222;
+		}
+
+		.markets-table th {
+			background: #111;
+			color: #888;
+			font-weight: 500;
+		}
+
+		.markets-table tr:hover {
+			background: #111;
+		}
+
+		.status-badge {
+			padding: 4px 8px;
+			border-radius: 4px;
+			font-size: 12px;
+			font-weight: 500;
+		}
+
+		.status-active {
+			background: #065f46;
+			color: #6ee7b7;
+		}
+
+		.status-resolved {
+			background: #1e40af;
+			color: #93c5fd;
+		}
+
+		.type-badge {
+			background: #374151;
+			color: #9ca3af;
+			padding: 4px 8px;
+			border-radius: 4px;
+			font-size: 12px;
+		}
+
+		.alert {
+			padding: 12px 16px;
+			border-radius: 6px;
+			margin-bottom: 16px;
+		}
+
+		.alert-success {
+			background: #065f46;
+			color: #6ee7b7;
+		}
+
+		.alert-error {
+			background: #7f1d1d;
+			color: #fca5a5;
+		}
+
+		.depth-dropdown {
+			position: relative;
+			display: inline-block;
+		}
+
+		.depth-btn {
+			padding: 4px 10px;
+			font-size: 12px;
+			background: #1e3a5f;
+			color: #60a5fa;
+			border: 1px solid #2563eb;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+
+		.depth-btn:hover {
+			background: #1e40af;
+		}
+
+		.depth-content {
+			display: none;
+			position: absolute;
+			right: 0;
+			top: 100%;
+			background: #151515;
+			border: 1px solid #333;
+			border-radius: 8px;
+			min-width: 420px;
+			z-index: 100;
+			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+			overflow: hidden;
+		}
+
+		.depth-content.show {
+			display: block;
+		}
+
+		.depth-tabs {
+			display: flex;
+			border-bottom: 1px solid #333;
+			background: #1a1a1a;
+		}
+
+		.depth-tab {
+			padding: 10px 16px;
+			font-size: 13px;
+			font-weight: 500;
+			color: #888;
+			cursor: pointer;
+			border-bottom: 2px solid transparent;
+		}
+
+		.depth-tab.active {
+			color: #fff;
+			border-bottom-color: #2563eb;
+		}
+
+		.depth-table-header {
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			padding: 8px 12px;
+			font-size: 11px;
+			color: #666;
+			text-transform: uppercase;
+			border-bottom: 1px solid #222;
+		}
+
+		.depth-table-header span:nth-child(2),
+		.depth-table-header span:nth-child(3) {
+			text-align: right;
+		}
+
+		.depth-section {
+			padding: 4px 0;
+		}
+
+		.depth-section-label {
+			padding: 4px 12px;
+			font-size: 11px;
+			font-weight: 600;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.depth-section-label.asks {
+			color: #ef4444;
+		}
+
+		.depth-section-label.bids {
+			color: #22c55e;
+		}
+
+		.depth-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			padding: 6px 12px;
+			font-size: 13px;
+			position: relative;
+		}
+
+		.depth-row .price {
+			font-weight: 500;
+		}
+
+		.depth-row .shares,
+		.depth-row .total {
+			text-align: right;
+			color: #aaa;
+		}
+
+		.depth-row.ask {
+			background: linear-gradient(to left, rgba(239, 68, 68, 0.1), transparent);
+		}
+
+		.depth-row.ask .price {
+			color: #ef4444;
+		}
+
+		.depth-row.bid {
+			background: linear-gradient(to left, rgba(34, 197, 94, 0.1), transparent);
+		}
+
+		.depth-row.bid .price {
+			color: #22c55e;
+		}
+
+		.depth-bar {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			right: 0;
+			opacity: 0.15;
+		}
+
+		.depth-bar.ask {
+			background: #ef4444;
+		}
+
+		.depth-bar.bid {
+			background: #22c55e;
+		}
+
+		.depth-spread-row {
+			display: flex;
+			justify-content: space-between;
+			padding: 8px 12px;
+			font-size: 12px;
+			color: #666;
+			border-top: 1px solid #222;
+			border-bottom: 1px solid #222;
+			background: #111;
+		}
+
+		.depth-option-header {
+			padding: 10px 12px;
+			font-weight: 600;
+			color: #fff;
+			font-size: 13px;
+			background: #1a1a1a;
+			border-bottom: 1px solid #222;
+			display: flex;
+			justify-content: space-between;
+		}
+
+		.depth-option-header .spread-badge {
+			font-size: 11px;
+			color: #888;
+			font-weight: 400;
+		}
+
+		.tag-input {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+			margin-top: 8px;
+		}
+
+		.tag {
+			background: #2563eb;
+			color: #fff;
+			padding: 4px 8px;
+			border-radius: 4px;
+			font-size: 12px;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+
+		.tag button {
+			background: none;
+			border: none;
+			color: #fff;
+			cursor: pointer;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="header">
+		<h1>PM Admin - Market Management</h1>
+		<div>
+			<span id="blockchain-status" style="font-size: 12px; color: #888;">Checking blockchain...</span>
+		</div>
+	</div>
+
+	<div class="container">
+		<div class="tabs">
+			<div class="tab active" data-tab="create">Create Market</div>
+			<div class="tab" data-tab="markets">View Markets</div>
+		</div>
+
+		<div id="alert-container"></div>
+
+		<!-- Create Market Panel -->
+		<div id="create-panel" class="panel active">
+			<div class="form-section">
+				<h2>Create New Market</h2>
+				<form id="create-market-form">
+					<div class="form-row">
+						<div class="form-group">
+							<label>Market Type</label>
+							<select id="market-type" name="type">
+								<option value="binary">Binary (Yes/No)</option>
+								<option value="multi">Multi-Outcome</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label>Category</label>
+							<select id="market-category" name="category">
+								<option value="politics">Politics</option>
+								<option value="sports">Sports</option>
+								<option value="finance">Finance</option>
+								<option value="rwa">RWA</option>
+								<option value="elections">Elections</option>
+								<option value="crypto">Crypto</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label>Title / Question</label>
+						<input type="text" name="title" placeholder="e.g., Will Bitcoin reach $100k by 2025?" required>
+					</div>
+
+					<div class="form-group">
+						<label>Description</label>
+						<textarea name="description" placeholder="Additional details about the market..."></textarea>
+					</div>
+
+					<div class="form-row">
+						<div class="form-group">
+							<label>End Date/Time</label>
+							<input type="datetime-local" name="endTime" required>
+						</div>
+						<div class="form-group">
+							<label>Market Image</label>
+							<input type="file" name="image" accept="image/*">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label>Tags</label>
+						<input type="text" id="tag-input" placeholder="Type and press Enter to add tags">
+						<div id="tags-container" class="tag-input"></div>
+						<input type="hidden" name="tags" id="tags-hidden">
+					</div>
+
+					<!-- Multi-outcome options -->
+					<div id="options-section" style="display: none;">
+						<div class="form-group">
+							<label>Outcomes</label>
+							<div id="options-container" class="options-container"></div>
+							<button type="button" class="btn btn-secondary" onclick="addOption()">+ Add Outcome</button>
+						</div>
+					</div>
+
+					<div class="form-row" style="margin-top: 24px;">
+						<div class="form-group">
+							<div class="checkbox-group">
+								<input type="checkbox" id="deploy-chain" name="deployToChain" value="true">
+								<label for="deploy-chain">Deploy to blockchain</label>
+							</div>
+						</div>
+					</div>
+
+					<div style="margin-top: 24px;">
+						<button type="submit" class="btn btn-primary">Create Market</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- View Markets Panel -->
+		<div id="markets-panel" class="panel">
+			<div class="form-section">
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+					<h2>All Markets</h2>
+					<button class="btn btn-secondary" onclick="loadMarkets()">Refresh</button>
+				</div>
+
+				<div class="form-row" style="margin-bottom: 16px;">
+					<div class="form-group">
+						<select id="filter-category" onchange="loadMarkets()">
+							<option value="">All Categories</option>
+							<option value="politics">Politics</option>
+							<option value="sports">Sports</option>
+							<option value="finance">Finance</option>
+							<option value="rwa">RWA</option>
+							<option value="elections">Elections</option>
+							<option value="crypto">Crypto</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<select id="filter-status" onchange="loadMarkets()">
+							<option value="active">Active</option>
+							<option value="resolved">Resolved</option>
+							<option value="">All</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<select id="filter-type" onchange="loadMarkets()">
+							<option value="">All Types</option>
+							<option value="binary">Binary</option>
+							<option value="multi">Multi-Outcome</option>
+						</select>
+					</div>
+				</div>
+
+				<table class="markets-table">
+					<thead>
+						<tr>
+							<th>Title</th>
+							<th>Type</th>
+							<th>Category</th>
+							<th>End Time</th>
+							<th>Status</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody id="markets-tbody">
+						<tr>
+							<td colspan="6" style="text-align: center; color: #888;">Loading...</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const API_BASE = '/api';
+		let tags = [];
+		let options = [];
+
+		// Tab switching
+		document.querySelectorAll('.tab').forEach(tab => {
+			tab.addEventListener('click', () => {
+				document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+				document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+				tab.classList.add('active');
+				document.getElementById(tab.dataset.tab + '-panel').classList.add('active');
+				if (tab.dataset.tab === 'markets') loadMarkets();
+			});
+		});
+
+		// Market type toggle
+		document.getElementById('market-type').addEventListener('change', (e) => {
+			const optionsSection = document.getElementById('options-section');
+			if (e.target.value === 'multi') {
+				optionsSection.style.display = 'block';
+				if (options.length === 0) {
+					addOption();
+					addOption();
+				}
+			} else {
+				optionsSection.style.display = 'none';
+			}
+		});
+
+		// Tags handling
+		document.getElementById('tag-input').addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				const value = e.target.value.trim();
+				if (value && !tags.includes(value)) {
+					tags.push(value);
+					renderTags();
+				}
+				e.target.value = '';
+			}
+		});
+
+		function renderTags() {
+			const container = document.getElementById('tags-container');
+			container.innerHTML = tags.map((tag, i) => `
+        <span class="tag">${tag} <button type="button" onclick="removeTag(${i})">x</button></span>
+      `).join('');
+			document.getElementById('tags-hidden').value = JSON.stringify(tags);
+		}
+
+		function removeTag(index) {
+			tags.splice(index, 1);
+			renderTags();
+		}
+
+		// Options handling
+		function addOption() {
+			const index = options.length;
+			options.push({ name: '', shortName: '' });
+			renderOptions();
+		}
+
+		function removeOption(index) {
+			options.splice(index, 1);
+			renderOptions();
+		}
+
+		function renderOptions() {
+			const container = document.getElementById('options-container');
+			container.innerHTML = options.map((opt, i) => `
+        <div class="option-row" style="flex-wrap: wrap;">
+          <input type="text" placeholder="Outcome name (e.g., Trump)" 
+                 value="${opt.name}" onchange="options[${i}].name = this.value" style="flex: 2;">
+          <input type="text" placeholder="Short name" 
+                 value="${opt.shortName || ''}" onchange="options[${i}].shortName = this.value" style="flex: 1; max-width: 120px;">
+          <input type="file" accept="image/*" onchange="handleOptionImage(${i}, this)" 
+                 style="flex: 1; max-width: 200px; font-size: 12px;">
+          <button type="button" class="btn btn-danger btn-remove" onclick="removeOption(${i})">Remove</button>
+          ${opt.imagePreview ? `<img src="${opt.imagePreview}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">` : ''}
+        </div>
+      `).join('');
+		}
+
+		function handleOptionImage(index, input) {
+			if (input.files && input.files[0]) {
+				options[index].imageFile = input.files[0];
+				options[index].imagePreview = URL.createObjectURL(input.files[0]);
+				renderOptions();
+			}
+		}
+
+		// Show alert
+		function showAlert(message, type = 'success') {
+			const container = document.getElementById('alert-container');
+			container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+			setTimeout(() => container.innerHTML = '', 5000);
+		}
+
+		// Create market form
+		let isSubmitting = false;
+		document.getElementById('create-market-form').addEventListener('submit', async (e) => {
+			e.preventDefault();
+			
+			// Prevent double submission
+			if (isSubmitting) return;
+			isSubmitting = true;
+			
+			const submitBtn = e.target.querySelector('button[type="submit"]');
+			const originalText = submitBtn.textContent;
+			submitBtn.disabled = true;
+			submitBtn.textContent = 'Creating...';
+			
+			const formData = new FormData(e.target);
+
+			if (formData.get('type') === 'multi') {
+				formData.set('options', JSON.stringify(options.filter(o => o.name).map(o => ({
+					name: o.name,
+					shortName: o.shortName
+				}))));
+			}
+
+			try {
+				const res = await fetch(`${API_BASE}/markets`, {
+					method: 'POST',
+					body: formData
+				});
+
+				const data = await res.json();
+				if (res.ok) {
+					// Upload option images if any
+					if (formData.get('type') === 'multi') {
+						const optionsWithImages = options.filter(o => o.name && o.imageFile);
+						for (let i = 0; i < optionsWithImages.length; i++) {
+							const opt = options[i];
+							if (opt.imageFile) {
+								const imgForm = new FormData();
+								imgForm.append('image', opt.imageFile);
+								await fetch(`${API_BASE}/upload/option/${data.marketId}/${i}`, {
+									method: 'POST',
+									body: imgForm
+								});
+							}
+						}
+					}
+
+					showAlert('Market created successfully! ID: ' + data.marketId, 'success');
+					e.target.reset();
+					tags = [];
+					options = [];
+					renderTags();
+					renderOptions();
+					document.getElementById('options-section').style.display = 'none';
+				} else {
+					showAlert('Error: ' + data.error, 'error');
+				}
+			} catch (error) {
+				showAlert('Error: ' + error.message, 'error');
+			} finally {
+				// Re-enable button
+				isSubmitting = false;
+				submitBtn.disabled = false;
+				submitBtn.textContent = originalText;
+			}
+		});
+
+		// Load markets
+		async function loadMarkets() {
+			const category = document.getElementById('filter-category').value;
+			const status = document.getElementById('filter-status').value;
+			const type = document.getElementById('filter-type').value;
+
+			const params = new URLSearchParams();
+			if (category) params.set('category', category);
+			if (status) params.set('status', status);
+			if (type) params.set('type', type);
+
+			try {
+				const res = await fetch(`${API_BASE}/markets?${params}`);
+				const data = await res.json();
+
+				const tbody = document.getElementById('markets-tbody');
+				if (data.markets.length === 0) {
+					tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">No markets found</td></tr>';
+					return;
+				}
+
+				tbody.innerHTML = data.markets.map(m => `
+          <tr>
+            <td>
+              <div style="font-weight: 500;">${m.title}</div>
+              ${m.conditionId ? `<div style="font-size: 11px; color: #666; margin-top: 4px;">Condition: ${m.conditionId.slice(0, 14)}...</div>` : ''}
+            </td>
+            <td><span class="type-badge">${m.type}</span></td>
+            <td>${m.category}</td>
+            <td>${new Date(m.endTime * 1000).toLocaleDateString()}</td>
+            <td><span class="status-badge status-${m.status}">${m.status}</span></td>
+            <td>
+              <div class="depth-dropdown">
+                <button class="depth-btn" onclick="toggleDepth('${m.marketId}', this)">Depth</button>
+                <div class="depth-content" id="depth-${m.marketId}">
+                  <div style="color: #888; font-size: 12px;">Loading...</div>
+                </div>
+              </div>
+              <button class="btn" style="padding: 4px 8px; font-size: 12px; margin-left: 4px; background: #dc3545;" onclick="deleteMarket('${m.marketId}', '${m.title.replace(/'/g, "\\'")}')">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+			} catch (error) {
+				console.error('Failed to load markets:', error);
+			}
+		}
+
+		// Orderbook auto-refresh state
+		let depthIntervals = {};
+
+		// Toggle depth dropdown
+		async function toggleDepth(marketId, btn) {
+			const content = document.getElementById(`depth-${marketId}`);
+
+			// Close other dropdowns and clear their intervals
+			document.querySelectorAll('.depth-content.show').forEach(el => {
+				if (el.id !== `depth-${marketId}`) {
+					el.classList.remove('show');
+					const otherId = el.id.replace('depth-', '');
+					if (depthIntervals[otherId]) {
+						clearInterval(depthIntervals[otherId]);
+						delete depthIntervals[otherId];
+					}
+				}
+			});
+
+			if (content.classList.contains('show')) {
+				content.classList.remove('show');
+				// Clear refresh interval
+				if (depthIntervals[marketId]) {
+					clearInterval(depthIntervals[marketId]);
+					delete depthIntervals[marketId];
+				}
+				return;
+			}
+
+			content.classList.add('show');
+			await refreshDepth(marketId, content);
+
+			// Start auto-refresh every 5 seconds
+			depthIntervals[marketId] = setInterval(() => {
+				refreshDepth(marketId, content);
+			}, 5000);
+		}
+
+		// Refresh depth data
+		async function refreshDepth(marketId, content) {
+			try {
+				const res = await fetch(`${API_BASE}/orderbook/market/${marketId}`);
+				const data = await res.json();
+
+				if (data.error) {
+					content.innerHTML = `<div style="color: #fca5a5; font-size: 12px;">${data.error}</div>`;
+					return;
+				}
+
+				content.innerHTML = renderDepthContent(data);
+			} catch (error) {
+				content.innerHTML = `<div style="color: #fca5a5; font-size: 12px;">Failed to load depth</div>`;
+			}
+		}
+
+		// Render depth content - Polymarket style
+		function renderDepthContent(data) {
+			if (!data.options || data.options.length === 0) {
+				return '<div style="padding: 12px; color: #888; font-size: 12px;">No market data available</div>';
+			}
+
+			let html = '';
+
+			for (const opt of data.options) {
+				const asks = opt.asks || [];
+				const bids = opt.bids || [];
+				const maxAskShares = Math.max(...asks.map(a => a.shares), 1);
+				const maxBidShares = Math.max(...bids.map(b => b.shares), 1);
+
+				html += `
+					<div class="depth-option-header">
+						<span>${opt.name}</span>
+						<span class="spread-badge">Spread: ${(opt.spread || 10).toFixed(1)}¢</span>
+					</div>
+					<div class="depth-table-header">
+						<span>Price</span>
+						<span>Shares</span>
+						<span>Total</span>
+					</div>
+				`;
+
+				// Asks section (reversed, highest at top)
+				html += '<div class="depth-section">';
+				html += '<div class="depth-section-label asks">Asks</div>';
+				const reversedAsks = [...asks].reverse();
+				for (const ask of reversedAsks) {
+					const barWidth = (ask.shares / maxAskShares) * 100;
+					html += `
+						<div class="depth-row ask">
+							<div class="depth-bar ask" style="width: ${barWidth}%"></div>
+							<span class="price">${ask.price.toFixed(1)}¢</span>
+							<span class="shares">${formatNumber(ask.shares)}</span>
+							<span class="total">$${formatNumber(ask.total)}</span>
+						</div>
+					`;
+				}
+				html += '</div>';
+
+				// Spread row
+				html += `
+					<div class="depth-spread-row">
+						<span>Last: ${opt.lastPrice || 50}¢</span>
+						<span>Spread: ${(opt.spread || 10).toFixed(1)}¢</span>
+					</div>
+				`;
+
+				// Bids section
+				html += '<div class="depth-section">';
+				html += '<div class="depth-section-label bids">Bids</div>';
+				for (const bid of bids) {
+					const barWidth = (bid.shares / maxBidShares) * 100;
+					html += `
+						<div class="depth-row bid">
+							<div class="depth-bar bid" style="width: ${barWidth}%"></div>
+							<span class="price">${bid.price.toFixed(1)}¢</span>
+							<span class="shares">${formatNumber(bid.shares)}</span>
+							<span class="total">$${formatNumber(bid.total)}</span>
+						</div>
+					`;
+				}
+				html += '</div>';
+			}
+
+			return html;
+		}
+
+		// Format number with commas
+		function formatNumber(num) {
+			if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+			if (num >= 1000) return (num / 1000).toFixed(2) + 'K';
+			return num.toFixed(2);
+		}
+
+		// Close dropdown when clicking outside
+		document.addEventListener('click', (e) => {
+			if (!e.target.closest('.depth-dropdown')) {
+				document.querySelectorAll('.depth-content.show').forEach(el => el.classList.remove('show'));
+			}
+		});
+
+		function viewMarket(marketId) {
+			alert('Market ID: ' + marketId + '\n\nFull market details modal coming soon...');
+		}
+
+		function deleteMarket(marketId, title) {
+			// Show inline confirmation instead of popup
+			const btn = event.target;
+			const parent = btn.parentElement;
+			btn.style.display = 'none';
+
+			const confirmSpan = document.createElement('span');
+			confirmSpan.id = 'confirm-' + marketId;
+			confirmSpan.style.cssText = 'display: inline-flex; gap: 4px; align-items: center;';
+			confirmSpan.innerHTML = `
+				<span style="font-size: 11px; color: #fca5a5;">Delete?</span>
+				<button class="btn" style="padding: 2px 8px; font-size: 11px; background: #dc3545;" onclick="confirmDeleteYes('${marketId}')">Yes</button>
+				<button class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;" onclick="confirmDeleteNo('${marketId}')">No</button>
+			`;
+			parent.appendChild(confirmSpan);
+		}
+
+		async function confirmDeleteYes(marketId) {
+			try {
+				const res = await fetch(`${API_BASE}/markets/${marketId}`, { method: 'DELETE' });
+				if (res.ok) {
+					showAlert('Market deleted', 'success');
+				} else {
+					showAlert('Failed to delete', 'error');
+				}
+			} catch (e) {
+				showAlert('Error: ' + e.message, 'error');
+			}
+			loadMarkets();
+		}
+
+		function confirmDeleteNo(marketId) {
+			loadMarkets(); // Just refresh to restore buttons
+		}
+
+		// Check blockchain status
+		async function checkBlockchain() {
+			try {
+				const res = await fetch(`${API_BASE}/status`);
+				const data = await res.json();
+				const statusEl = document.getElementById('blockchain-status');
+				if (data.blockchain) {
+					statusEl.textContent = 'Blockchain: Connected';
+					statusEl.style.color = '#6ee7b7';
+				} else {
+					statusEl.textContent = 'Blockchain: Offline';
+					statusEl.style.color = '#fca5a5';
+				}
+			} catch (e) {
+				document.getElementById('blockchain-status').textContent = 'Blockchain: Error';
+			}
+		}
+
+		// Init
+		checkBlockchain();
+	</script>
+</body>
+
+</html>
