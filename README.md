@@ -420,3 +420,433 @@ sequenceDiagram
     
     Note over User: Now holds 1000 YES_C + 1000 USDC
 ```
+
+
+## 9. Deployment
+
+### Deployment Script
+
+```solidity
+// script/Deploy.s.sol
+pragma solidity ^0.8.30;
+
+import "forge-std/Script.sol";
+import "../src/ConditionalTokens.sol";
+import "../src/PMExchange.sol";
+import "../src/PMExchangeRouter.sol";
+import "../src/PMMultiMarketAdapter.sol";
+
+contract Deploy is Script {
+    function run() external {
+        vm.startBroadcast();
+        
+        // Deploy ConditionalTokens
+        ConditionalTokens ct = new ConditionalTokens();
+        
+        // Deploy PMExchange (requires USDC address)
+        // PMExchange exchange = new PMExchange(address(ct), USDC_ADDRESS);
+        
+        // Deploy Router
+        // PMExchangeRouter router = new PMExchangeRouter(address(exchange), address(ct), USDC_ADDRESS);
+        
+        // Deploy Multi-Market Adapter
+        // PMMultiMarketAdapter adapter = new PMMultiMarketAdapter(address(ct), USDC_ADDRESS);
+        
+        vm.stopBroadcast();
+    }
+}
+```
+
+### Deployment Commands
+
+```bash
+# Deploy to local anvil
+forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
+
+# Deploy to Mantle (mainnet)
+forge script script/Deploy.s.sol --rpc-url https://rpc.mantle.xyz --broadcast --verify
+
+# Verify contract
+forge verify-contract <ADDRESS> src/PMExchange.sol:PMExchange --chain mantle
+```
+
+---
+
+## 10. Core Contracts
+
+### 10.1 ConditionalTokens
+
+**File**: `src/ConditionalTokens.sol`
+
+The foundation of the prediction market system. Implements an ERC1155-like token system for outcome positions.
+
+#### Core Concepts
+
+- **Condition**: A market question identified by `conditionId = keccak256(oracle, questionId, outcomeSlotCount)`
+- **Position**: A token representing a stake in a specific outcome
+- **Partition**: Division of outcomes (e.g., `[1, 2]` = `[YES, NO]` for binary markets)
+
+#### Key Functions
+
+```solidity
+// Prepare a new condition (market)
+function prepareCondition(address oracle, bytes32 questionId, uint256 outcomeSlotCount) 
+    external returns (bytes32 conditionId);
+
+// Report market outcome (oracle only)
+function reportPayouts(bytes32 questionId, uint256[] calldata payouts) external;
+
+// Split collateral into outcome tokens
+function splitPosition(
+    IERC20 collateralToken,
+    bytes32 parentCollectionId,
+    bytes32 conditionId,
+    uint256[] calldata partition,  // e.g., [1, 2] for YES/NO
+    uint256 amount
+) external;
+
+// Merge outcome tokens back to collateral
+function mergePositions(
+    IERC20 collateralToken,
+    bytes32 parentCollectionId,
+    bytes32 conditionId,
+    uint256[] calldata partition,
+    uint256 amount
+) external;
+
+// Redeem winning positions for collateral
+function redeemPositions(
+    IERC20 collateralToken,
+    bytes32 parentCollectionId,
+    bytes32 conditionId,
+    uint256[] calldata indexSets
+) external;
+```
+
+#### Token Operations
+
+```solidity
+// Transfer tokens
+function transfer(address to, uint256 tokenId, uint256 amount) external returns (bool);
+function transferFrom(address from, address to, uint256 tokenId, uint256 amount) external returns (bool);
+
+// Approvals
+function approve(address spender, uint256 tokenId, uint256 amount) external returns (bool);
+function setApprovalForAll(address operator, bool approved) external;
+```
+
+#### Position ID Calculation
+
+```
+positionId = keccak256(collateralToken, collectionId)
+collectionId = keccak256(conditionId, indexSet)
+conditionId = keccak256(oracle, questionId, outcomeSlotCount)
+```
+
+---
+
+### 10.2 PMExchange
+
+**File**: `src/PMExchange.sol`
+
+The central limit order book exchange for prediction market tokens.
+
+#### Enums
+
+```solidity
+enum Side { BuyYes, SellYes, BuyNo, SellNo }
+
+enum TiF {
+    GTC,       // Good-Till-Cancelled
+    IOC,       // Immediate-Or-Cancel
+    FOK,       // Fill-Or-Kill
+    POST_ONLY  // Maker only (no taker fills)
+}
+
+enum OrderStatus { Active, Filled, PartiallyFilled, Cancelled }
+```
+
+#### Core Structs
+
+```solidity
+/// @dev Packed order struct for gas efficiency
+struct Order {
+    uint64 orderId;
+    address trader;
+    bytes32 conditionId;
+    uint8 tick;          // 1-99 representing $0.01-$0.99
+    bool isBuy;          // normalized: true = buying YES
+    bool wantsNo;        // true if user wants NO token
+    uint128 quantity;
+    uint128 filled;
+    TiF tif;
+    OrderStatus status;
+    uint48 timestamp;
+}
+
+struct TickLevel {
+    uint128 totalQuantity;  // total quantity at this tick
+    uint64 head;            // first order in queue (FIFO)
+    uint64 tail;            // last order in queue
+    uint32 orderCount;
+}
+
+struct OrderLink {
+    uint64 prev;  // previous order in queue
+    uint64 next;  // next order in queue
+}
+
+struct Market {
+    uint256 yesTokenId;
+    uint256 noTokenId;
+    uint48 endTime;
+    bool registered;
+    bool paused;
+    bool resolved;
+}
+
+struct MarketSummary {
+    uint256 yesTokenId;
+    uint256 noTokenId;
+    bool registered;
+    bool paused;
+    uint8 bestBidTick;
+    uint128 bestBidSize;
+    uint8 bestAskTick;
+    uint128 bestAskSize;
+    uint8 midPriceTick;
+    uint8 spreadTicks;
+    uint256 yesPriceBps;
+    uint256 noPriceBps;
+}
+```
+
+#### Admin Functions
+
+```solidity
+// Register a new market
+function registerMarket(
+    bytes32 conditionId, 
+    uint256 yesTokenId, 
+    uint256 noTokenId, 
+    uint48 endTime
+) external onlyOwner;
+
+// Resolve market (stop trading)
+function resolveMarket(bytes32 conditionId) external onlyOwner;
+
+// Toggle market pause
+function toggleMarketPause(bytes32 conditionId) external onlyOwner;
+```
+
+#### Order Functions
+
+```solidity
+// Place on-chain order
+function placeOrder(
+    bytes32 conditionId, 
+    Side side, 
+    uint8 tick, 
+    uint128 quantity, 
+    TiF tif
+) external returns (uint64 orderId);
+
+// Cancel active order
+function cancelOrder(uint64 orderId) external;
+
+// Set operator for order management
+function setOperator(address operator, bool approved) external;
+```
+
+#### View Functions
+
+```solidity
+// Best bid/ask
+function getBestBid(bytes32 conditionId) public view returns (uint8 tick, uint128 size);
+function getBestAsk(bytes32 conditionId) public view returns (uint8 tick, uint128 size);
+function getSpread(bytes32 conditionId) external view returns (uint8 bidTick, uint8 askTick, uint8 spreadTicks);
+
+// Price utilities
+function tickToPrice(uint8 tick) public pure returns (uint256);  // tick → 1e18 price
+function priceToTick(uint256 price) public pure returns (uint8); // 1e18 price → tick
+
+// Orderbook depth
+function getOrderBookDepth(bytes32 conditionId, uint8 depth) external view 
+    returns (uint8[] memory bidTicks, uint128[] memory bidSizes, uint8[] memory askTicks, uint128[] memory askSizes);
+function getNoBookDepth(bytes32 conditionId, uint8 depth) external view 
+    returns (uint8[] memory bidTicks, uint128[] memory bidSizes, uint8[] memory askTicks, uint128[] memory askSizes);
+
+// User orders
+function getUserOrders(address user, uint256 offset, uint256 limit) external view 
+    returns (uint64[] memory orderIds, Order[] memory orderData);
+
+// Market info
+function getMarketCount() external view returns (uint256);
+function getTokenIds(bytes32 conditionId) external view returns (uint256 yesTokenId, uint256 noTokenId);
+
+// Frontend helpers
+function getMidPrice(bytes32 conditionId) external view returns (uint8 midTick, bool hasLiquidity);
+function getMarketPrices(bytes32 conditionId) external view 
+    returns (uint256 yesPrice, uint256 noPrice, uint256 spreadBps);
+function getMarketSummary(bytes32 conditionId) external view returns (MarketSummary memory);
+function getMultipleMarketSummaries(bytes32[] calldata conditionIds) external view returns (MarketSummary[] memory);
+function getAllMarkets(uint256 offset, uint256 limit) external view 
+    returns (bytes32[] memory conditionIds, MarketSummary[] memory summaries);
+function hasLiquidityAtTick(bytes32 conditionId, bool isBid, uint8 tick) external view 
+    returns (bool hasLiquidity, uint128 size);
+function estimateFill(bytes32 conditionId, Side side, uint128 quantity) external view 
+    returns (uint128 fillableAmount, uint256 avgPriceBps, uint256 totalCost);
+```
+
+---
+
+### 10.3 PMExchangeRouter
+
+**File**: `src/PMExchangeRouter.sol`
+
+A user-friendly router that simplifies common trading operations.
+
+#### Market Orders
+
+```solidity
+// Market buy YES tokens
+function marketBuyYes(bytes32 conditionId, uint128 size) external returns (uint256 cost);
+
+// Market buy NO tokens
+function marketBuyNo(bytes32 conditionId, uint128 size) external returns (uint256 cost);
+
+// Market sell YES tokens
+function marketSellYes(bytes32 conditionId, uint128 size) external returns (uint256 received);
+
+// Market sell NO tokens
+function marketSellNo(bytes32 conditionId, uint128 size) external returns (uint256 received);
+```
+
+#### Limit Orders
+
+```solidity
+// Limit buy YES tokens (fills immediate matches, rests remainder)
+function limitBuyYes(bytes32 conditionId, uint8 tick, uint128 size) external returns (uint64 orderId);
+
+// Limit buy NO tokens
+function limitBuyNo(bytes32 conditionId, uint8 tick, uint128 size) external returns (uint64 orderId);
+
+// Limit sell YES tokens (mints if needed)
+function limitSellYes(bytes32 conditionId, uint8 tick, uint128 size) external returns (uint64 orderId);
+
+// Limit sell NO tokens (mints if needed)
+function limitSellNo(bytes32 conditionId, uint8 tick, uint128 size) external returns (uint64 orderId);
+```
+
+#### Position Management
+
+```solidity
+// Split USDC into YES + NO tokens
+function split(bytes32 conditionId, uint128 amount) external;
+
+// Merge YES + NO tokens back to USDC
+function merge(bytes32 conditionId, uint128 amount) external;
+
+// Redeem winning positions after resolution
+function redeem(bytes32 conditionId) external;
+
+// Cancel order
+function cancelOrder(uint64 orderId) external;
+```
+
+---
+
+### 10.4 PMMultiMarketAdapter
+
+**File**: `src/PMMultiMarketAdapter.sol`
+
+Enables NegRisk-style multi-outcome markets (e.g., 3-candidate elections).
+
+#### Core Concept
+
+For a 3-outcome market (A, B, C), holding NO on any 2 outcomes is equivalent to holding YES on the third:
+
+```
+NO_A + NO_B ≡ YES_C + (n-1) USDC
+```
+
+This allows efficient position conversion without needing external liquidity.
+
+#### Structs
+
+```solidity
+struct Market {
+    bytes32[] questionIds;      // Question IDs for each outcome
+    address authorizedResolver; // Oracle that can resolve
+    uint8 questionCount;        // Number of outcomes
+    bool registered;
+}
+```
+
+#### Functions
+
+```solidity
+// Register a multi-outcome market
+function registerMarket(
+    bytes32 marketId, 
+    address authorizedResolver, 
+    bytes32[] calldata questionIds
+) external onlyOwner;
+
+// Split USDC into YES/NO tokens for a specific outcome
+function splitPosition(address oracle, bytes32 questionId, uint256 amount) external;
+
+// Merge YES/NO back to USDC
+function mergePositions(address oracle, bytes32 questionId, uint256 amount) external;
+
+// Convert N NO positions to 1 YES position + (N-1) USDC
+function convertPositions(bytes32 marketId, uint256 indexSet, uint256 amount) external;
+
+// Report outcome (resolver only)
+function reportOutcome(bytes32 marketId, bytes32 questionId, bool yesWins) external;
+
+// Redeem winning positions
+function redeemPositions(address ctOracle, bytes32 questionId) external;
+
+// Admin: deposit wUSDC for conversions
+function depositCollateral(uint256 amount) external;
+
+// Admin: redeem orphan NO exposure
+function redeemAdapterNO(bytes32 marketId, bytes32 questionId) external onlyOwner;
+```
+
+#### Helper Functions
+
+```solidity
+function getConditionId(address oracle, bytes32 questionId) public pure returns (bytes32);
+function getCollectionId(address oracle, bytes32 questionId, bool outcome) public pure returns (bytes32);
+function getPositionId(address oracle, bytes32 questionId, bool outcome) public view returns (uint256);
+function getWUSDCBalance() external view returns (uint256);
+```
+
+---
+
+### 10.5 WUsdc
+
+**File**: `src/WUsdc.sol`
+
+Wrapped USDC token used by the multi-market adapter for collateral accounting.
+
+```solidity
+// Wrap USDC to wUSDC (adapter only)
+function wrap(address to, uint256 amount) external;
+
+// Unwrap wUSDC to USDC (adapter only)
+function unwrap(address to, uint256 amount) external;
+
+// Mint wUSDC (adapter only)
+function mint(uint256 amount) external;
+
+// Burn wUSDC (adapter only)
+function burn(uint256 amount) external;
+
+// Set authorized adapter
+function setAdapter(address _adapter) external onlyOwner;
+```
+
+---
