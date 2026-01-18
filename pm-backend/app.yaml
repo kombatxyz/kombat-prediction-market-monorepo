@@ -13,7 +13,7 @@ env_variables:
   DB_USER: "postgres"
   DB_PASS: "pmbackend123"
   DB_NAME: "markets"
-  ADMIN_PRIVATE_KEY: "0xed124e6900cd5c074d9fe23bc7bf5c22f93a5ea7ca76f89e3614ff986f236c7b"
+  ADMIN_PRIVATE_KEY: ""
   GCS_PROJECT_ID: "vigilant-walker-484020-m4"
   GCS_BUCKET: "pm-market-images"
 
